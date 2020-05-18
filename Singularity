@@ -32,6 +32,7 @@ Stage: build
       - MAGeCK
       - TrimGalore
       - Bismark
+      - Subread
       - UCSC tools:
          - addCols
          - ameme
@@ -718,6 +719,24 @@ Stage: build
 %apphelp bismark
     Bismark (0.22.3) . https://github.com/FelixKrueger/Bismark
 
+
+# ############################ Subread package ###################
+
+%apprun featureCounts
+	exec featureCounts
+
+%appinstall featureCounts
+	wget -O subread.tar.gz https://sourceforge.net/projects/subread/files/subread-2.0.1/subread-2.0.1-source.tar.gz/download
+	tar zxvf subread.tar.gz
+	cd subread-2.0.1-source/src
+	make -f Makefile.Linux
+	cd ../bin
+	cp -R * /usr/local/bin/
+	cd ../..
+	rm subread.tar.gz
+
+%apphelp featureCounts
+	Subread 2.0.1 featureCounts http://bioinf.wehi.edu.au/subread-package/
 
 # ############################ UCSC tools ########################
 
