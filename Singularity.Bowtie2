@@ -5,8 +5,7 @@ Stage: compile
 # Intel TBB does not play well with Alpine Linux. Hence Archlinux.
 
 %post
-	pacman -Syu --noconfirm
-	pacman -S --noconfirm git base-devel wget unzip hwloc cmake
+	pacman -Syu --noconfirm && pacman -S --noconfirm git base-devel wget unzip hwloc cmake
 
   # Intel Threading Building Blocks 2019 U8
 
@@ -17,7 +16,7 @@ Stage: compile
   git clone https://github.com/intel/tbb
 	cd tbb
   cmake -D TBB_STRICT:BOOL=false -Wno-error=deprecated .
-  cmake --build . -j 3
+  cmake --build . -j 8
   ctest
   cmake --install .
 
