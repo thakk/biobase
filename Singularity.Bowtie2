@@ -12,31 +12,31 @@ Stage: compile
 	mkdir /install_src
 	mkdir -p /install_lib/lib
   mkdir /install_lib/include
+  mkdir -p /install/bin/ /install_src
+
+	pacman -Syu --noconfirm
+	pacman -S --noconfirm git base-devel wget unzip cmake hwloc
+
+  # Intel Threading Building Blocks 2019 U8
+  #echo "/usr/local/lib" >> /etc/ld.so.conf.d/usr_local_lib.conf
+
   cd /install_src
   git clone https://github.com/intel/tbb
 	cd tbb
-  cmake -D TBB_STRICT:BOOL=false -Wno-error=deprecated .
   cmake --build . -j 8
   ctest
   cmake --install .
 
-  #find . -name '*so' | grep release | xargs -I{} cp {} /usr/local/lib/  # Copy release libs to sys dir
-  #find . -name '*so.2' | grep release | xargs -I{} cp {} /usr/local/lib/
-  #cp -R include/* /usr/local/include/
+  find . -name '*so' | grep release | xargs -I{} cp {} /usr/local/lib/  # Copy release libs to sys dir
+  find . -name '*so.2' | grep release | xargs -I{} cp {} /usr/local/lib/
+  cp -R include/* /usr/local/include/
 
-  # Also copy files to deploy dirs
-  find . -name '*so' | grep release | xargs -I{} cp {} /install_lib/lib/
-  find . -name '*so.2' | grep release | xargs -I{} cp {} /install_lib/lib/
-  cp -R include/* /install_lib/include/
   ldconfig
-
 
 %apprun bowtie2
    exec bowtie2
 
 %appinstall bowtie2
-   mkdir -p /install/bin
-   #mkdir /install_src
    cd /install_src
    wget -O bowtie.zip https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.2/bowtie2-2.4.2-source.zip/download
    unzip -o bowtie.zip
@@ -44,9 +44,35 @@ Stage: compile
    make -j 3
    find . -maxdepth 1 -executable -type f -exec cp {} /install/bin/ \;
 
-
 %apphelp bowtie2
    Bowtie 2.4.2
+
+%apprun samtools
+   exec samtools
+
+%appinstall samtools
+   cd /install_src
+   wget https://github.com/samtools/htslib/releases/download/1.12/htslib-1.12.tar.bz2
+   #git clone https://github.com/samtools/htslib/
+   tar xf htslib-1.12.tar.bz2
+   cd htslib-1.12
+   autoheader
+   autoconf
+   ./configure --prefix=/install
+   make -j 8
+   make install
+   cd ..
+   rm -rf samtools
+   wget https://github.com/samtools/samtools/releases/download/1.12/samtools-1.12.tar.bz2
+   # git clone https://github.com/samtools/samtools
+   tar xf samtools-1.12.tar.bz2
+   cd samtools-12
+   autoheader
+   autoconf -Wno-syntax
+   ./configure -- prefix=/install
+   make -j 8
+   make install
+   cd ..
 
 
 Bootstrap: docker
@@ -54,19 +80,33 @@ From: archlinux/base
 Stage: release
 
 %post
-	pacman -Syu --noconfirm
+	pacman -Sy
   echo "/usr/local/lib" >> /etc/ld.so.conf.d/usr_local_lib.conf
 	ldconfig
 
 %files from compile
+  # bowtie2
 	/install_lib/lib /usr/
   /install/bin/ /usr/
+
+  # samtools
+  /install/include /usr
+  /install/lib /usr
+  /install/share /usr
 
 %apphelp bowtie2
 	Bowtie 2.4.2
 
 %apprun bowtie2
 	exec bowtie2
+
+%apphelp samtools
+  Samtools 1.12
+  https://github.com/samtools/htslib/
+  https://github.com/samtools/samtools
+
+%apprun samtools
+  exec samtools
 
 %labels
 	Author "Tomi Häkkinen"
